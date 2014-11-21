@@ -179,8 +179,8 @@ int convert2Root(TOut &out, TDataContainer data, TService &service)
 			}
 			if (maxX>50.)
 			{
-				out.hSignal_g40[ich]->Fill(x);
-				out.hSignal_2D_g40[ich]->Fill(time, x);
+				out.hSignal_g50[ich]->Fill(x);
+				out.hSignal_2D_g50[ich]->Fill(time, x);
 			}
 		}
 	}
