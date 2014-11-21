@@ -29,7 +29,12 @@ bool exitSignal = false;
 #define NUMCHS 4
 #define NUMPOINTSPEREVENT 1024
 #define NUMDATA 2
-typedef double TDataContainer[NUMCHS][NUMPOINTSPEREVENT][NUMDATA];
+
+struct TDataContainer
+{
+	int ipointMax[NUMCHS];
+	double data[NUMCHS][NUMPOINTSPEREVENT][NUMDATA];
+};
 
 struct TIn
 {
@@ -42,7 +47,11 @@ struct TOut
 	string fileName;
 	TFile *rootFile;
 	TH1D *hSignal[NUMCHS];
+	TH1D *hSignal_g50[NUMCHS];
+	TH1D *hSignal_g40[NUMCHS];
 	TH2D *hSignal_2D[NUMCHS];
+	TH2D *hSignal_2D_g50[NUMCHS];
+	TH2D *hSignal_2D_g40[NUMCHS];
 };
 
 struct TService
@@ -112,6 +121,20 @@ int init(TOut &out)
 		sprintf(histName, "SignalvsTime_Ch%d", i+1);
 		out.hSignal_2D[i] = new TH2D(histName, histName, 1030, 0, 1030,
 				1000, 0, 400);
+
+		sprintf(histName, "Signal_g40_Ch%d", i+1);
+		out.hSignal_g40[i] = new TH1D(histName, histName, 1000, 0, 400);
+
+		sprintf(histName, "Signal_g50_Ch%d", i+1);
+		out.hSignal_g50[i] = new TH1D(histName, histName, 1000, 0, 400);
+
+		sprintf(histName, "SignalvsTime_g40_Ch%d", i+1);
+		out.hSignal_2D_g40[i] = new TH2D(histName, histName, 1030, 0, 1030,
+				1000, 0, 400);
+
+		sprintf(histName, "SignalvsTime_g50_Ch%d", i+1);
+		out.hSignal_2D_g50[i] = new TH2D(histName, histName, 1030, 0, 1030,
+				1000, 0, 400);
 	}
 
 	cout << "### Initializing Ouput: " << out.fileName << endl;
@@ -138,13 +161,27 @@ int convert2Root(TOut &out, TDataContainer data, TService &service)
 			continue;
 		for (int i=0; i<NUMPOINTSPEREVENT; i++)
 		{
-			double time = data[ich][i][0];
-			double x = data[ich][i][1];
+			double time = data.data[ich][i][0];
+			double x = data.data[ich][i][1];
+			int ipointMax = data.ipointMax[ich];
+			double maxTime = data.data[ich][ipointMax][0];
+			double maxX = data.data[ich][ipointMax][1];
 
 			if (service.verbosity>1)
 				service.logFile << ich+1 << "  " << time << "  " << x << endl;
-			out.hSignal[ich]->Fill(data[ich][i][1]);
-			out.hSignal_2D[ich]->Fill(data[ich][i][0], data[ich][i][1]);
+			out.hSignal[ich]->Fill(x);
+			out.hSignal_2D[ich]->Fill(time, x);
+
+			if (maxX>40.)
+			{
+				out.hSignal_g40[ich]->Fill(x);
+				out.hSignal_2D_g40[ich]->Fill(time, x);
+			}
+			if (maxX>50.)
+			{
+				out.hSignal_g40[ich]->Fill(x);
+				out.hSignal_2D_g40[ich]->Fill(time, x);
+			}
 		}
 	}
 
@@ -166,6 +203,7 @@ int processFile(TIn &in, TOut &out, TService &service)
 	bool collectData = false;
 	TDataContainer data;
 	int iEvent(0), currentCh(0), ipoint(0);
+	double maxAmp[NUMCHS]; 
 	while (in.xmlFile>>str && exitSignal==false)
 	{
 		if (service.verbosity>5)
@@ -177,6 +215,8 @@ int processFile(TIn &in, TOut &out, TService &service)
 			collectData = true;
 			currentCh = 0;
 			ipoint = 0;
+			for (int i=0; i<NUMCHS; i++)
+				maxAmp[i] = 0;
 			continue;
 		}
 		else if (str=="</Event>")
@@ -263,12 +303,17 @@ int processFile(TIn &in, TOut &out, TService &service)
 						(pos_2bra-1)-(pos_comma+1)+1);
 				float time = atof(stime.c_str());
 				float x = atof(sx.c_str());
-			
+
 				x = fabs(x);
 				if (currentCh>0)
 				{
-					data[currentCh-1][ipoint][0] = time;
-					data[currentCh-1][ipoint][1] = x;
+					data.data[currentCh-1][ipoint][0] = time;
+					data.data[currentCh-1][ipoint][1] = x;
+					if (x>maxAmp[currentCh-1])
+					{
+						data.ipointMax[currentCh-1] = ipoint;
+						maxAmp[currentCh-1] = x;
+					}
 					ipoint++;
 					if (service.verbosity>1)
 						service.logFile << str << "  "
