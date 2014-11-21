@@ -52,6 +52,10 @@ struct TOut
 	TH2D *hSignal_2D[NUMCHS];
 	TH2D *hSignal_2D_g50[NUMCHS];
 	TH2D *hSignal_2D_g40[NUMCHS];
+
+	TH1D *hSigInt[NUMCHS];
+	TH1D *hSigInt_g40[NUMCHS];
+	TH1D *hSigInt_g50[NUMCHS];
 };
 
 struct TService
@@ -113,9 +117,19 @@ int main(int argc, char **argv)
 int init(TOut &out)
 {
 	out.rootFile = new TFile(out.fileName.c_str(), "recreate");
+
+	char dirName[200];
+	for (int i=0; i<NUMCHS; i++)
+	{
+		sprintf(dirName, "Ch%d", i+1);
+		out.rootFile->mkdir(dirName);
+	}
+
 	char histName[200];
 	for (int i=0; i<NUMCHS; i++)
 	{
+		sprintf(dirName, "Ch%d", i+1);
+		out.rootFile->cd(dirName);
 		sprintf(histName, "Signal_Ch%d", i+1);
 		out.hSignal[i] = new TH1D(histName, histName, 1000, 0, 400);
 		sprintf(histName, "SignalvsTime_Ch%d", i+1);
@@ -135,6 +149,13 @@ int init(TOut &out)
 		sprintf(histName, "SignalvsTime_g50_Ch%d", i+1);
 		out.hSignal_2D_g50[i] = new TH2D(histName, histName, 1030, 0, 1030,
 				1000, 0, 400);
+
+		sprintf(histName, "SigIntegral_Ch%d", i+1);
+		out.hSigInt[i] = new TH1D(histName, histName, 1000, 0, 5000);
+		sprintf(histName, "SigIntegral_g40_Ch%d", i+1);
+		out.hSigInt_g40[i] = new TH1D(histName, histName, 1000, 0, 5000);
+		sprintf(histName, "SigIntegral_g50_Ch%d", i+1);
+		out.hSigInt_g50[i] = new TH1D(histName, histName, 1000, 0, 5000);
 	}
 
 	cout << "### Initializing Ouput: " << out.fileName << endl;
@@ -159,6 +180,7 @@ int convert2Root(TOut &out, TDataContainer data, TService &service)
 	{
 		if (service.activeChs[ich]==false)
 			continue;
+		double sum(0), sum_g40(0), sum_g50(0);
 		for (int i=0; i<NUMPOINTSPEREVENT; i++)
 		{
 			double time = data.data[ich][i][0];
@@ -170,19 +192,29 @@ int convert2Root(TOut &out, TDataContainer data, TService &service)
 			if (service.verbosity>1)
 				service.logFile << ich+1 << "  " << time << "  " << x << endl;
 			out.hSignal[ich]->Fill(x);
-			out.hSignal_2D[ich]->Fill(time, x);
+			out.hSignal_2D[ich]->Fill(i, x);
+
+			if (i>=(ipointMax-50) && i<=(ipointMax+50))
+				sum+=x;
 
 			if (maxX>40.)
 			{
 				out.hSignal_g40[ich]->Fill(x);
-				out.hSignal_2D_g40[ich]->Fill(time, x);
+				out.hSignal_2D_g40[ich]->Fill(i, x);
+				if (i>=(ipointMax-50) && i<=(ipointMax+50))
+					sum_g40+=x;
 			}
 			if (maxX>50.)
 			{
 				out.hSignal_g50[ich]->Fill(x);
-				out.hSignal_2D_g50[ich]->Fill(time, x);
+				out.hSignal_2D_g50[ich]->Fill(i, x);
+				if (i>=(ipointMax-50) && i<=(ipointMax+50))
+					sum_g50+=x;
 			}
 		}
+		out.hSigInt[ich]->Fill(sum);
+		out.hSigInt_g40[ich]->Fill(sum_g40);
+		out.hSigInt_g50[ich]->Fill(sum_g50);
 	}
 
 	return 0;
