@@ -8,6 +8,7 @@
 #include <fstream>
 #include <stdlib.h>
 #include <stdint.h>
+#include <iomanip>
 #include <time.h>
 #include <sstream>
 #include <vector>
@@ -33,6 +34,7 @@ bool exitSignal = false;
 struct TDataContainer
 {
 	int ipointMax[NUMCHS];
+	double eventTime;
 	double data[NUMCHS][NUMPOINTSPEREVENT][NUMDATA];
 };
 
@@ -56,6 +58,9 @@ struct TOut
 	TH1D *hSigInt[NUMCHS];
 	TH1D *hSigInt_g40[NUMCHS];
 	TH1D *hSigInt_g50[NUMCHS];
+
+	//	Histo of when the event happens
+	TH1D *hEventTime;
 };
 
 struct TService
@@ -117,6 +122,8 @@ int main(int argc, char **argv)
 int init(TOut &out)
 {
 	out.rootFile = new TFile(out.fileName.c_str(), "recreate");
+	out.hEventTime = new TH1D("Event Time", "Event Time",
+			10000, 56500, 60000);
 
 	char dirName[200];
 	for (int i=0; i<NUMCHS; i++)
@@ -217,6 +224,9 @@ int convert2Root(TOut &out, TDataContainer data, TService &service)
 		out.hSigInt_g50[ich]->Fill(sum_g50);
 	}
 
+	//	Accessing time of the event information
+	out.hEventTime->Fill(data.eventTime);
+
 	return 0;
 }
 
@@ -227,9 +237,8 @@ int processFile(TIn &in, TOut &out, TService &service)
 {
 	int lineCounter = 0;
 	string str;
-	//	Always skip the first 3 lines
-	while(in.xmlFile>>str && lineCounter<3)
-		lineCounter++;
+
+	cout << "### Start Processing..." << endl;
 
 	lineCounter=0;
 	bool collectData = false;
@@ -238,8 +247,10 @@ int processFile(TIn &in, TOut &out, TService &service)
 	double maxAmp[NUMCHS]; 
 	while (in.xmlFile>>str && exitSignal==false)
 	{
+//		size_t pos_bra = str.find('<');
+//		str = str.erase(0, pos_bra);
 		if (service.verbosity>5)
-			cout << str << endl;
+			service.logFile << str << endl;
 
 		//	Look for Event tags
 		if (str=="<Event>")
@@ -291,6 +302,21 @@ int processFile(TIn &in, TOut &out, TService &service)
 			}
 			if (stag=="<Time>")
 			{
+				in.xmlFile>>str;
+				size_t pos_bra = str.find('<');
+				string stime = str.substr(0, pos_bra);
+				int secs, msecs;
+				int hours, mins;
+				sscanf(stime.c_str(), "%d:%d:%d.%d", &hours, &mins, &secs, 
+						&msecs);
+				data.eventTime = 3600.*hours + 60.*mins + secs + 0.001*msecs;
+				if (service.verbosity>1)
+					service.logFile << stime << endl
+						<< "Event Time: " << setprecision(10)
+						<< data.eventTime << endl
+						<< "hours:" << hours << " mins:" << mins << " secs:"
+						<< secs << " msecs:" << msecs << endl;
+
 				continue;
 			}
 			if (stag=="<HUnit>")
