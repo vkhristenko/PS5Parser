@@ -68,6 +68,7 @@ struct TService
 	int verbosity;
 	int maxEvents;
 	ofstream logFile;
+	ofstream txtFile;
 	bool activeChs[NUMCHS];
 };
 
@@ -101,6 +102,7 @@ int main(int argc, char **argv)
 	service.verbosity = verbosity;
 	service.maxEvents = maxEvents;
 	service.logFile.open("log.log");
+	service.txtFile.open("log.txt");
 	for (int i=0; i<NUMCHS; i++)
 		service.activeChs[i] = false;
 
@@ -250,7 +252,7 @@ int processFile(TIn &in, TOut &out, TService &service)
 //		size_t pos_bra = str.find('<');
 //		str = str.erase(0, pos_bra);
 		if (service.verbosity>5)
-			service.logFile << str << endl;
+			service.txtFile << str << endl;
 
 		//	Look for Event tags
 		if (str=="<Event>")
@@ -282,8 +284,8 @@ int processFile(TIn &in, TOut &out, TService &service)
 			string stag = str.substr(pos_bra, pos_ket+1);
 
 			if (service.verbosity>4)
-				service.logFile << stag << "  " << pos_bra << "  " << pos_ket << "  "
-					<< str << endl;
+				service.logFile << stag << "  " << pos_bra << "  " 
+					<< pos_ket << "  "	<< str << endl;
 
 			if (stag=="<Serial>")
 			{
@@ -334,21 +336,25 @@ int processFile(TIn &in, TOut &out, TService &service)
 			if (stag=="<CHN1>")
 			{
 				currentCh = 1;
+				ipoint = 0;
 				service.activeChs[currentCh-1] = true;
 			}
 			else if (stag=="<CHN2>")
 			{
 				currentCh = 2;
+				ipoint = 0;
 				service.activeChs[currentCh-1] = true;
 			}
 			else if (stag=="<CHN3>")
 			{
 				currentCh = 3;
+				ipoint = 0;
 				service.activeChs[currentCh-1] = true;
 			}
 			else if (stag=="<CHN4>")
 			{
 				currentCh = 4;
+				ipoint = 0;
 				service.activeChs[currentCh-1] = true;
 			}
 			if (stag=="<Data>")
