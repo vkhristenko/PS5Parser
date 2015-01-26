@@ -1,0 +1,137 @@
+
+./DamClrBatch1:
+total 4204748
+(1) Dec  9 19:00 Anthracine_method2_batch1_ClearArea_2Gs_50mVdiv_5vpp_run1.xml
+(1) Dec  9 19:13 Anthracine_method2_batch1_DamagedArea_2Gs_50mVdiv_5vpp_run1.xml
+
+(2) Dec  9 16:23 PEN_method2_batch1_ClearArea_2Gs_20mVdiv_5vpp_run1.xml
+(2.1) Dec  9 17:25 PEN_method2_batch1_ClearArea_2Gs_20mVdiv_5vpp_run2.xml
+
+(2) Dec  9 16:07 PEN_method2_batch1_DamagedArea_2Gs_20mVdiv_5vpp_run1.xml
+(2.1) Dec  9 17:13 PEN_method2_batch1_DamagedArea_2Gs_20mVdiv_5vpp_run2.xml
+
+(3) Dec  9 18:33 PET_method2_batch1_ClearArea_2Gs_50mVdiv_5vpp_run1.xml
+(3) Dec  9 18:45 PET_method2_batch1_DamagedArea_2Gs_50mVdiv_5vpp_run1.xml
+
+(22) Dec  9 17:54 SCSN_method2_batch1_ClearArea_2Gs_100mVdiv_4.5Vpp_run1.xml
+(22.1) Dec  9 18:18 SCSN_method2_batch1_ClearArea_2Gs_100mVdiv_4.5Vpp_run2.xml
+(22) Dec  9 18:06 SCSN_method2_batch1_DamagedArea_2Gs_100mVdiv_4.5vpp_run1.xml
+
+(?) Dec  9 17:39 SCSN_method2_batch1_DamagedArea_2Gs_100mVdiv_5vpp_run1.xml
+
+
+**************************** After IRRAD not taken yet *************************
+./glass/sample1:
+total 1407000
+ Dec  8 10:35 Sample1_5kevents.xml
+ Dec  7 15:27 Sample1_NoClip_1.xml
+ Dec  7 15:06 Sample1_NoClip.xml
+ Dec  7 14:52 Sample1.xml
+
+./glass/sample2:
+total 703436
+(111) Dec  8 10:07 Sample2_0%Boron_1.xml
+(111) Dec  8 10:22 Sample2_0%Boron_2.xml
+
+(111)
+(111)
+
+./GlassNotIrr/sample1:
+total 1055260
+ (222) Dec  7 15:27 Sample1_NoClip_1.xml
+ (same as above) Dec  7 15:06 Sample1_NoClip.xml
+ 
+Dec  7 14:52 Sample1.xml
+***********************************************************************************
+
+
+./NEWSCSNData:
+total 1753800
+ Dec 11 16:31 SCSN_Batch1_irradiated_1600V_LightInDmgONEDOT_4.4vpp_2Gsps.xml
+
+ (4) Dec 11 15:41 SCSN_method2_batch1_ClearArea_2Gs_1600V_4.4Vpp_run1.xml
+ (4.1) Dec 11 16:06 SCSN_method2_batch1_ClearArea_2Gs_1600V_4.4Vpp_run2.xml
+
+ (4) Dec 11 15:54 SCSN_method2_batch1_DamagedArea_2Gs_1600V_4.4Vpp_run1.xml
+ (4.1) Dec 11 16:19 SCSN_method2_batch1_DamagedArea_2Gs_1600V_4.4Vpp_run2.xml
+
+
+./PEN_PET_DirectLI/Batch2_Irrad_NotIrrad/irradiated:
+total 1054640
+
+
+ (6) Dec  9 11:11 PET_tile_no_Mirror_Irradiated.xml
+
+./PEN_PET_DirectLI/Batch2_Irrad_NotIrrad/NotIrrad:
+total 3139048
+ Nov 30 16:06 NoTile_1.xml
+ Nov 30 13:50 NoTile.xml
+ 
+ Nov 30 14:37 PEN_tile_Mirror.xml
+
+(5) Nov 30 15:04 PEN_tile_no_Mirror.xml
+
+(6) Nov 30 15:31 PET_tile_no_Mirror.xml
+
+(7) Nov 30 15:58 QP+ANT_tile_no_Mirror.xml
+
+
+./PEN_PET_DirLightInj:
+total 3154252
+ Dec 10 12:25 PEN_Batch1_irradiated_1600V_LightInDmgONEDOT_5vpp_1Gsps.xml
+
+ (8.1) Dec 10 12:12 PEN_Batch1_irradiated_1600V_LightInDmgONEDOT_5vpp_2Gsps_center.xml
+ (8.2) Dec 12 09:45 PEN_Batch1_irradiated_1600V_LightInDmgONEDOT_5vpp_2Gsps_dot1.xml
+ (8.3) Dec 12 10:01 PEN_Batch1_irradiated_1600V_LightInDmgONEDOT_5vpp_2Gsps_dot2.xml
+
+(5) Dec 10 11:52 PEN_Batch2_irradiated_1000V_LightInDmg.xml
+
+ Dec 10 11:36 PEN_Batch2_irradiated_1000V_OriginlPlace.xml
+
+(8) Dec 12 10:29 PEN_method2_batch1_ClearArea_2Gs_20mVdiv_5vpp_run1.xml
+
+
+ Dec 11 16:31 SCSN_Batch1_irradiated_1600V_LightInDmgONEDOT_4.4vpp_2Gsps_center.xml
+ Dec 12 10:44 SCSN_Batch1_irradiated_1600V_LightInDmgONEDOT_4.4vpp_2Gsps_dot1.xml
+ Dec 12 10:33 SCSN_Batch1_irradiated_1600V_LightInDmgONEDOT_4.4vpp_2Gsps_dot2.xml
+
+
+(23.1)  Dec 10 12:51 SCSN_Batch1_irradiated_1600V_LightInDmgONEDOT_4.5vpp_2Gsps_center.xml
+(23.1)  Dec 12 10:55 SCSN_Batch1_irradiated_1600V_LightInDmgONEDOT_4.5vpp_2Gsps_dot1.xml
+(23.1)  Dec 12 10:22 SCSN_Batch1_irradiated_1600V_LightInDmgONEDOT_4.5vpp_2Gsps_dot2.xml
+
+
+
+
+
+
+
+To cpmpare
+
+1 - 1
+2 - 2
+2.1 - 2.1
+
+3 - 3
+
+4  -  4
+4.1 - 4.1
+
+5 - 5
+
+6 - 6
+
+8 - 8.1
+8 - 8.2
+8 - 8.3
+
+
+22 - 22
+22.1 - 22
+
+22 - 23.1
+22 - 23.2
+22 - 23.3
+
+
+to cmp - charge damaged

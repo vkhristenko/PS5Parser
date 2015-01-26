@@ -1,8 +1,9 @@
 # MY_PROGRAM = quickextract_wBetaGamma
 # MY_PROGRAM = quickextract_wBetaGamma_wE
-MY_PROGRAM = raw2ntuple
+#MY_PROGRAM = raw2ntuple
 # MY_PROGRAM = quickreco
 # MY_PROGRAM = quickextract_0
+MY_PROGRAM = analyzeNtuples
 
 # MY_PROGRAM = photonanalyzer
 # MY_PROGRAM = photonplotter
