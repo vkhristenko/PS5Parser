@@ -30,6 +30,7 @@ bool exitSignal = false;
 #define NUMCHS 4
 #define NUMPOINTSPEREVENT 1024
 #define NUMDATA 2
+#define RESCONVFACTOR 20
 
 struct TDataContainer
 {
@@ -48,6 +49,9 @@ struct TOut
 {
 	string fileName;
 	TFile *rootFile;
+	TTree *tEvents[NUMCHS];
+	double charge[NUMCHS];
+
 	TH1D *hSignal[NUMCHS];
 	TH1D *hSignal_g50[NUMCHS];
 	TH1D *hSignal_g40[NUMCHS];
@@ -59,8 +63,15 @@ struct TOut
 	TH1D *hSigInt_g40[NUMCHS];
 	TH1D *hSigInt_g50[NUMCHS];
 
-	//	Histo of when the event happens
+	TH1D *hdT[NUMCHS];
+	TH1D *hSigWidth[NUMCHS];
+	TH1D *hCharge[NUMCHS];
+	TH1D *hiCellTMin[NUMCHS];
+	TH1D *hiCellTMax[NUMCHS];
+	TH1D *hiCellMaxAmp[NUMCHS];
+
 	TH1D *hEventTime;
+	
 };
 
 struct TService
@@ -74,6 +85,7 @@ struct TService
 
 int processFile(TIn&, TOut&, TService&);
 int convert2Root(TOut&, TDataContainer, TService&);
+int computeQ(TOut&, TDataContainer, TService&);
 int init(TOut&);
 int init(TIn&);
 void sigHandler(int sig);
@@ -132,6 +144,8 @@ int init(TOut &out)
 	{
 		sprintf(dirName, "Ch%d", i+1);
 		out.rootFile->mkdir(dirName);
+		out.rootFile->cd(dirName);
+		gDirectory->mkdir("EventsInfo");
 	}
 
 	char histName[200];
@@ -165,6 +179,25 @@ int init(TOut &out)
 		out.hSigInt_g40[i] = new TH1D(histName, histName, 1000, 0, 5000);
 		sprintf(histName, "SigIntegral_g50_Ch%d", i+1);
 		out.hSigInt_g50[i] = new TH1D(histName, histName, 1000, 0, 5000);
+
+		sprintf(histName, "dT");
+		out.hdT[i] = new TH1D(histName, histName, 10000,0, 100);
+
+		sprintf(histName, "SigWidth_Ch%d", i+1);
+		out.hSigWidth[i] = new TH1D(histName, histName, 1000, 0, 100);
+		sprintf(histName, "Charge_Ch%d", i+1);
+		out.hCharge[i] = new TH1D(histName, histName, 10000, 0, 200000);
+
+		sprintf(histName, "iCellTMin_Ch%d", i+1);
+		out.hiCellTMin[i] = new TH1D(histName, histName, 1024, 0, 1024);
+		sprintf(histName, "iCellTMax_Ch%d", i+1);
+		out.hiCellTMax[i] = new TH1D(histName, histName, 1024, 0, 1024);
+		sprintf(histName, "iCellMaxAmp_Ch%d", i+1);
+		out.hiCellMaxAmp[i] = new TH1D(histName, histName, 1024, 0, 1024);
+
+		gDirectory->cd("EventsInfo");
+		out.tEvents[i] = new TTree("Events", "Events");
+		out.tEvents[i]->Branch("charge", &(out.charge[i]), "charge/D");
 	}
 
 	cout << "### Initializing Ouput: " << out.fileName << endl;
@@ -181,14 +214,113 @@ int init(TIn &in)
 }
 
 //
-//	Convert Current Event Data to Root
+//	Compute Charge for enabled channels
+//	Consider subtracting the background
 //
-int convert2Root(TOut &out, TDataContainer data, TService &service)
+int computeQ(TOut &out, TDataContainer data, TService &service)
 {
 	for (int ich=0; ich<NUMCHS; ich++)
 	{
 		if (service.activeChs[ich]==false)
 			continue;
+
+		//
+		//	Calculate the Pedestal here
+		//
+		double sumVdt(0), deltaT(0);
+		for (int i=0; i<300; i++)
+		{
+			double v1 = data.data[ich][i][1];
+			double v2 = data.data[ich][i+1][1];
+			double t1 = data.data[ich][i][0];
+			double t2 = data.data[ich][i+1][0];
+
+			double dt = t2-t1; deltaT+=dt;
+			double avgV = 0.5*(v2+v1);
+			sumVdt += avgV*dt;
+		}
+		//	Here is the pedestal in VOltage units
+		double pedV = sumVdt/deltaT;
+
+		int ipointMax = data.ipointMax[ich];
+		out.hiCellMaxAmp[ich]->Fill(ipointMax);
+		double maxAmp = data.data[ich][ipointMax][1] - pedV;
+
+		double ratio(1.);
+		int i(ipointMax);
+		while(ratio>0.05)
+		{
+			i--;
+			double cA = data.data[ich][i][1]-pedV;
+			ratio = cA/maxAmp;
+		}
+		//	Now, i will the point where the current voltage
+		//	amplitude is about 5% of the max
+		int itmin = i;
+		out.hiCellTMin[ich]->Fill(itmin);
+
+
+		i=ipointMax; ratio = 1.;
+		while(ratio>0.05)
+		{
+			i++;
+			double cA = data.data[ich][i][1] - pedV;
+			ratio = cA/maxAmp;
+		}
+		//	Now, we have the point where the current voltage 
+		//	amplitude is about 5% of the max
+		int itmax = i;		
+		out.hiCellTMax[ich]->Fill(itmax);
+
+		//
+		//	Now, let's compute the Charge
+		//	or Integral really
+		//
+		double charge(0);
+		sumVdt = 0;
+		double width(0);
+		for (int j=itmin; j<itmax; j++)
+		{
+			double v1 = data.data[ich][j][1] - pedV;
+			double v2 = data.data[ich][j+1][1] - pedV;
+			double t1 = data.data[ich][j][0];
+			double t2 = data.data[ich][j+1][0];
+
+			double dt = t2-t1;
+			double avgV = 0.5*(v2+v1);
+			sumVdt += avgV*dt;
+			width += dt;
+		}
+		//	Now, charge = Ohmfact*sumVdt
+		charge = RESCONVFACTOR*sumVdt;
+		out.charge[ich] = charge;
+
+		out.hSigWidth[ich]->Fill(width);
+		out.hCharge[ich]->Fill(charge);
+		out.tEvents[ich]->Fill();
+	}
+
+	return 0;
+}
+//	Convert Current Event Data to Root
+//
+int convert2Root(TOut &out, TDataContainer data, TService &service)
+{
+
+	//
+	//	Separate Charge Computation from filling some auxillary histos
+	//
+	computeQ(out, data, service);
+
+	//
+	//	Here, I have only sample histos
+	//	Actual charge integration is done separately.
+	//
+	for (int ich=0; ich<NUMCHS; ich++)
+	{
+		if (service.activeChs[ich]==false)
+			continue;
+
 		double sum(0), sum_g40(0), sum_g50(0);
 		for (int i=0; i<NUMPOINTSPEREVENT; i++)
 		{
@@ -197,6 +329,17 @@ int convert2Root(TOut &out, TDataContainer data, TService &service)
 			int ipointMax = data.ipointMax[ich];
 			double maxTime = data.data[ich][ipointMax][0];
 			double maxX = data.data[ich][ipointMax][1];
+
+			if (i<(NUMPOINTSPEREVENT-1))
+			{
+				double t1 = data.data[ich][i][0];
+				double t2 = data.data[ich][i+1][0];
+				double deltaT = t2-t1;
+				out.hdT[ich]->Fill(deltaT);
+
+				if (service.verbosity>1)
+					service.logFile << deltaT << endl;
+			}
 
 			if (service.verbosity>1)
 				service.logFile << ich+1 << "  " << time << "  " << x << endl;
